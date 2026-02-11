@@ -1,0 +1,71 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@external", "@shareable", "@authenticated", "@requiresScopes"])
+
+type Query {
+  """
+  Get a specific transaction by ID
+  """
+  transaction(id: ID!): Transaction @authenticated
+}
+
+"""
+A financial transaction on an account
+"""
+type Transaction @key(fields: "id") {
+  id: ID!
+  account: Account!
+  amount: Float!
+  type: TransactionType!
+  status: TransactionStatus!
+  description: String
+  merchantName: String
+  category: TransactionCategory
+  timestamp: String!
+  runningBalance: Float
+}
+
+# Extends Account to add transaction history
+extend type Account @key(fields: "id") {
+  id: ID! @external
+  transactions(limit: Int, offset: Int): [Transaction!]! @authenticated
+  recentTransactions: [Transaction!]! @authenticated
+}
+
+"""
+Type of transaction
+"""
+enum TransactionType {
+  DEBIT
+  CREDIT
+  TRANSFER_IN
+  TRANSFER_OUT
+  FEE
+  INTEREST
+}
+
+"""
+Current status of the transaction
+"""
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+"""
+Category for transaction classification
+"""
+enum TransactionCategory {
+  GROCERIES
+  DINING
+  UTILITIES
+  ENTERTAINMENT
+  TRANSPORTATION
+  HEALTHCARE
+  SHOPPING
+  INCOME
+  TRANSFER
+  OTHER
+}
+

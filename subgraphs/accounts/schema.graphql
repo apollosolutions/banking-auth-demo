@@ -1,0 +1,54 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@external", "@shareable", "@authenticated", "@requiresScopes"])
+
+type Query {
+  """
+  Get a specific account by ID
+  """
+  account(id: ID!): Account @authenticated
+
+  """
+  Get an account by account number (requires read:accounts scope)
+  """
+  accountByNumber(accountNumber: String!): Account @requiresScopes(scopes: [["read:accounts"]])
+}
+
+"""
+A bank account (checking, savings, etc.)
+"""
+type Account @key(fields: "id") {
+  id: ID!
+  accountNumber: String! @authenticated
+  accountType: AccountType!
+  balance: Float! @authenticated
+  availableBalance: Float! @authenticated
+  currency: String!
+  status: AccountStatus!
+  openedDate: String!
+  interestRate: Float
+}
+
+# Extends Customer to add their accounts
+extend type Customer @key(fields: "id") {
+  id: ID! @external
+  accounts: [Account!]! @authenticated
+}
+
+"""
+Type of bank account
+"""
+enum AccountType {
+  CHECKING
+  SAVINGS
+  MONEY_MARKET
+  CD
+}
+
+"""
+Current status of the account
+"""
+enum AccountStatus {
+  ACTIVE
+  FROZEN
+  CLOSED
+}

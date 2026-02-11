@@ -1,0 +1,93 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@external", "@shareable", "@authenticated", "@requiresScopes", "@policy"])
+
+type Query {
+  """
+  Get a specific transfer by ID
+  """
+  transfer(id: ID!): Transfer @authenticated
+
+  """
+  Get all pending transfers for the authenticated user
+  """
+  pendingTransfers: [Transfer!]! @authenticated
+}
+
+type Mutation {
+  """
+  Initiate a new transfer between accounts.
+  Transfers over $10,000 require HIGH_VALUE_TRANSFER policy (elevated authorization).
+  Note: In production, also add @requiresScopes(scopes: [["write:transfers"]])
+  """
+  initiateTransfer(input: TransferInput!): Transfer! 
+    @policy(policies: [["HIGH_VALUE_TRANSFER"]])
+
+  """
+  Cancel a pending/scheduled transfer (requires write:transfers scope)
+  """
+  cancelTransfer(id: ID!): Transfer! @requiresScopes(scopes: [["write:transfers"]])
+}
+
+"""
+A money transfer between accounts
+"""
+type Transfer @key(fields: "id") {
+  id: ID!
+  fromAccount: Account!
+  toAccount: Account
+  toExternalAccount: ExternalAccount
+  amount: Float!
+  status: TransferStatus!
+  scheduledDate: String
+  completedDate: String
+  memo: String
+  createdAt: String!
+}
+
+"""
+External bank account information for outgoing transfers
+"""
+type ExternalAccount {
+  bankName: String!
+  routingNumber: String!
+  accountNumber: String!
+  accountHolderName: String!
+}
+
+"""
+Current status of the transfer
+"""
+enum TransferStatus {
+  SCHEDULED
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+"""
+Input for creating a new transfer
+"""
+input TransferInput {
+  fromAccountId: ID!
+  toAccountId: ID
+  toExternalAccount: ExternalAccountInput
+  amount: Float!
+  scheduledDate: String
+  memo: String
+}
+
+"""
+Input for external account information
+"""
+input ExternalAccountInput {
+  bankName: String!
+  routingNumber: String!
+  accountNumber: String!
+  accountHolderName: String!
+}
+
+# Reference to Account entity from accounts subgraph
+type Account @key(fields: "id", resolvable: false) {
+  id: ID!
+}

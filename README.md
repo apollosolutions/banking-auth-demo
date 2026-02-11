@@ -527,79 +527,6 @@ const POLICY_CONFIG = {
 };
 ```
 
-## Postman Collection
-
-A comprehensive Postman collection is included to demonstrate all authorization directives.
-
-### Importing the Collection
-
-1. Open Postman
-2. Click **Import** > **File**
-3. Select both files from `router/postman/`:
-   - `Banking_Demo_Auth_Showcase.postman_collection.json`
-   - `Banking_Demo.postman_environment.json`
-4. Select the **Banking Demo** environment
-
-### Collection Structure
-
-| Folder | Directive | Description |
-|--------|-----------|-------------|
-| 1. No Auth Required | - | Health check and introspection |
-| 2. @authenticated | `@authenticated` | Requires valid identity |
-| 3. @requiresScopes | `@requiresScopes` | Requires specific OAuth scopes |
-| 4. @policy | `@policy` | Custom policy evaluation |
-| 5. Combined Scenarios | Multiple | Real-world usage patterns |
-
-### Example Requests
-
-**@authenticated** - Get current customer:
-```graphql
-query GetMe {
-  me {
-    id
-    firstName
-    lastName
-    email
-  }
-}
-```
-Header: `x-customer-id: customer:1`
-
-**@requiresScopes** - Get customer PII:
-```graphql
-query GetCustomerPII {
-  me {
-    dateOfBirth
-    ssn
-    address { street city state }
-  }
-}
-```
-Requires: `read:pii` scope in JWT
-
-**@policy** - High-value transfer:
-```graphql
-mutation LargeTransfer {
-  initiateTransfer(input: {
-    fromAccountId: "account:1"
-    toAccountId: "account:2"
-    amount: 15000
-  }) {
-    id status
-  }
-}
-```
-Requires: `x-authorization-level: elevated` header for amounts > $10,000
-
-### Auto Token Refresh
-
-The collection includes a pre-request script that automatically fetches Auth0 tokens. Configure your Auth0 credentials in the environment:
-
-- `auth0_domain` - Your Auth0 tenant domain
-- `auth0_client_id` - M2M application client ID
-- `auth0_client_secret` - M2M application client secret
-- `auth0_audience` - API identifier
-
 ## Enterprise Features
 
 This demo can be extended with Apollo Router enterprise features:
@@ -615,21 +542,25 @@ See the commented sections in `router/router.yaml` for configuration examples.
 
 ```
 ├── router/
-│   ├── router.yaml          # Router configuration with JWT auth & coprocessor
-│   ├── supergraph.yaml      # Subgraph composition config
-│   ├── supergraph.graphql   # Composed supergraph schema
-│   ├── get-token.js         # Script to get Auth0 tokens
-│   ├── .env.auth0.sample    # Auth0 credentials template
-│   └── postman/             # Postman collection for testing
-│       ├── Banking_Demo_Auth_Showcase.postman_collection.json
-│       └── Banking_Demo.postman_environment.json
+│   ├── router.yaml              # Router configuration with JWT auth & coprocessor
+│   ├── supergraph.yaml          # Subgraph composition config
+│   ├── supergraph.graphql       # Composed supergraph schema
+│   ├── .env.sample              # Environment variables template
+│   ├── .env.auth0.sample        # Auth0 credentials template
+│   ├── compose.sh               # Compose supergraph schema
+│   ├── download-router.sh       # Download Apollo Router binary
+│   ├── download-rover.sh        # Download Rover CLI
+│   ├── fetch-offline-license.sh # Fetch offline enterprise license
+│   ├── get-token.sh             # Script to get Auth0 tokens
+│   ├── rover-dev.sh             # Run Rover in dev mode
+│   └── start-router.sh         # Start Apollo Router
 ├── subgraphs/
-│   ├── customers/           # Customer profiles subgraph
-│   ├── accounts/            # Bank accounts subgraph
-│   ├── transactions/        # Transaction history subgraph
-│   └── transfers/           # Money transfers subgraph (with @policy)
+│   ├── customers/               # Customer profiles subgraph
+│   ├── accounts/                # Bank accounts subgraph
+│   ├── transactions/            # Transaction history subgraph
+│   └── transfers/               # Money transfers subgraph (with @policy)
 └── coprocessor/
-    └── index.js             # Policy evaluation (HIGH_VALUE_TRANSFER)
+    └── index.js                 # Policy evaluation (HIGH_VALUE_TRANSFER)
 ```
 
 ## License
