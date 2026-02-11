@@ -1,0 +1,304 @@
+schema
+  @link(url: "https://specs.apollo.dev/link/v1.0")
+  @link(url: "https://specs.apollo.dev/join/v0.5", for: EXECUTION)
+  @link(url: "https://specs.apollo.dev/authenticated/v0.1", for: SECURITY)
+  @link(url: "https://specs.apollo.dev/requiresScopes/v0.1", for: SECURITY)
+  @link(url: "https://specs.apollo.dev/policy/v0.1", for: SECURITY)
+{
+  query: Query
+  mutation: Mutation
+}
+
+directive @authenticated on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
+
+directive @join__directive(graphs: [join__Graph!], name: String!, args: join__DirectiveArguments) repeatable on SCHEMA | OBJECT | INTERFACE | FIELD_DEFINITION
+
+directive @join__enumValue(graph: join__Graph!) repeatable on ENUM_VALUE
+
+directive @join__field(graph: join__Graph, requires: join__FieldSet, provides: join__FieldSet, type: String, external: Boolean, override: String, usedOverridden: Boolean, overrideLabel: String, contextArguments: [join__ContextArgument!]) repeatable on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+directive @join__graph(name: String!, url: String!) on ENUM_VALUE
+
+directive @join__implements(graph: join__Graph!, interface: String!) repeatable on OBJECT | INTERFACE
+
+directive @join__type(graph: join__Graph!, key: join__FieldSet, extension: Boolean! = false, resolvable: Boolean! = true, isInterfaceObject: Boolean! = false) repeatable on OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
+
+directive @join__unionMember(graph: join__Graph!, member: String!) repeatable on UNION
+
+directive @link(url: String, as: String, for: link__Purpose, import: [link__Import]) repeatable on SCHEMA
+
+directive @policy(policies: [[policy__Policy!]!]!) on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
+
+directive @requiresScopes(scopes: [[requiresScopes__Scope!]!]!) on FIELD_DEFINITION | OBJECT | INTERFACE | SCALAR | ENUM
+
+"""A bank account (checking, savings, etc.)"""
+type Account
+  @join__type(graph: ACCOUNTS, key: "id")
+  @join__type(graph: TRANSACTIONS, key: "id", extension: true)
+  @join__type(graph: TRANSFERS, key: "id", resolvable: false)
+{
+  id: ID!
+  accountNumber: String! @join__field(graph: ACCOUNTS) @authenticated
+  accountType: AccountType! @join__field(graph: ACCOUNTS)
+  balance: Float! @join__field(graph: ACCOUNTS) @authenticated
+  availableBalance: Float! @join__field(graph: ACCOUNTS) @authenticated
+  currency: String! @join__field(graph: ACCOUNTS)
+  status: AccountStatus! @join__field(graph: ACCOUNTS)
+  openedDate: String! @join__field(graph: ACCOUNTS)
+  interestRate: Float @join__field(graph: ACCOUNTS)
+  transactions(limit: Int, offset: Int): [Transaction!]! @join__field(graph: TRANSACTIONS) @authenticated
+  recentTransactions: [Transaction!]! @join__field(graph: TRANSACTIONS) @authenticated
+}
+
+"""Current status of the account"""
+enum AccountStatus
+  @join__type(graph: ACCOUNTS)
+{
+  ACTIVE @join__enumValue(graph: ACCOUNTS)
+  FROZEN @join__enumValue(graph: ACCOUNTS)
+  CLOSED @join__enumValue(graph: ACCOUNTS)
+}
+
+"""Type of bank account"""
+enum AccountType
+  @join__type(graph: ACCOUNTS)
+{
+  CHECKING @join__enumValue(graph: ACCOUNTS)
+  SAVINGS @join__enumValue(graph: ACCOUNTS)
+  MONEY_MARKET @join__enumValue(graph: ACCOUNTS)
+  CD @join__enumValue(graph: ACCOUNTS)
+}
+
+"""Customer address information"""
+type Address
+  @join__type(graph: CUSTOMERS)
+{
+  street: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  country: String!
+}
+
+"""A bank customer with their profile and KYC information"""
+type Customer
+  @join__type(graph: ACCOUNTS, key: "id", extension: true)
+  @join__type(graph: CUSTOMERS, key: "id")
+{
+  id: ID!
+  accounts: [Account!]! @join__field(graph: ACCOUNTS) @authenticated
+  email: String! @join__field(graph: CUSTOMERS) @authenticated
+  firstName: String! @join__field(graph: CUSTOMERS)
+  lastName: String! @join__field(graph: CUSTOMERS)
+  dateOfBirth: String @join__field(graph: CUSTOMERS) @requiresScopes(scopes: [["read:pii"]])
+  ssn: String @join__field(graph: CUSTOMERS) @requiresScopes(scopes: [["read:pii"]])
+  address: Address @join__field(graph: CUSTOMERS) @requiresScopes(scopes: [["read:pii"]])
+  phoneNumber: String @join__field(graph: CUSTOMERS) @authenticated
+  kycStatus: KYCStatus! @join__field(graph: CUSTOMERS)
+  createdAt: String! @join__field(graph: CUSTOMERS)
+}
+
+"""External bank account information for outgoing transfers"""
+type ExternalAccount
+  @join__type(graph: TRANSFERS)
+{
+  bankName: String!
+  routingNumber: String!
+  accountNumber: String!
+  accountHolderName: String!
+}
+
+"""Input for external account information"""
+input ExternalAccountInput
+  @join__type(graph: TRANSFERS)
+{
+  bankName: String!
+  routingNumber: String!
+  accountNumber: String!
+  accountHolderName: String!
+}
+
+input join__ContextArgument {
+  name: String!
+  type: String!
+  context: String!
+  selection: join__FieldValue!
+}
+
+scalar join__DirectiveArguments
+
+scalar join__FieldSet
+
+scalar join__FieldValue
+
+enum join__Graph {
+  ACCOUNTS @join__graph(name: "accounts", url: "http://localhost:4001/accounts/graphql")
+  CUSTOMERS @join__graph(name: "customers", url: "http://localhost:4001/customers/graphql")
+  TRANSACTIONS @join__graph(name: "transactions", url: "http://localhost:4001/transactions/graphql")
+  TRANSFERS @join__graph(name: "transfers", url: "http://localhost:4001/transfers/graphql")
+}
+
+"""Know Your Customer verification status"""
+enum KYCStatus
+  @join__type(graph: CUSTOMERS)
+{
+  PENDING @join__enumValue(graph: CUSTOMERS)
+  VERIFIED @join__enumValue(graph: CUSTOMERS)
+  REJECTED @join__enumValue(graph: CUSTOMERS)
+}
+
+scalar link__Import
+
+enum link__Purpose {
+  """
+  `SECURITY` features provide metadata necessary to securely resolve fields.
+  """
+  SECURITY
+
+  """
+  `EXECUTION` features provide metadata necessary for operation execution.
+  """
+  EXECUTION
+}
+
+type Mutation
+  @join__type(graph: TRANSFERS)
+{
+  """
+  Initiate a new transfer between accounts.
+  Transfers over $10,000 require HIGH_VALUE_TRANSFER policy (elevated authorization).
+  Note: In production, also add @requiresScopes(scopes: [["write:transfers"]])
+  """
+  initiateTransfer(input: TransferInput!): Transfer! @policy(policies: [["HIGH_VALUE_TRANSFER"]])
+
+  """Cancel a pending/scheduled transfer (requires write:transfers scope)"""
+  cancelTransfer(id: ID!): Transfer! @requiresScopes(scopes: [["write:transfers"]])
+}
+
+scalar policy__Policy
+
+type Query
+  @join__type(graph: ACCOUNTS)
+  @join__type(graph: CUSTOMERS)
+  @join__type(graph: TRANSACTIONS)
+  @join__type(graph: TRANSFERS)
+{
+  """Get a specific account by ID"""
+  account(id: ID!): Account @join__field(graph: ACCOUNTS) @authenticated
+
+  """Get an account by account number (requires read:accounts scope)"""
+  accountByNumber(accountNumber: String!): Account @join__field(graph: ACCOUNTS) @requiresScopes(scopes: [["read:accounts"]])
+
+  """Get the current authenticated customer"""
+  me: Customer @join__field(graph: CUSTOMERS) @authenticated
+
+  """Get a specific customer by ID (requires read:customers scope)"""
+  customer(id: ID!): Customer @join__field(graph: CUSTOMERS) @requiresScopes(scopes: [["read:customers"]])
+
+  """Get all customers (requires read:customers scope)"""
+  customers: [Customer!]! @join__field(graph: CUSTOMERS) @requiresScopes(scopes: [["read:customers"]])
+
+  """Get a specific transaction by ID"""
+  transaction(id: ID!): Transaction @join__field(graph: TRANSACTIONS) @authenticated
+
+  """Get a specific transfer by ID"""
+  transfer(id: ID!): Transfer @join__field(graph: TRANSFERS) @authenticated
+
+  """Get all pending transfers for the authenticated user"""
+  pendingTransfers: [Transfer!]! @join__field(graph: TRANSFERS) @authenticated
+}
+
+scalar requiresScopes__Scope
+
+"""A financial transaction on an account"""
+type Transaction
+  @join__type(graph: TRANSACTIONS, key: "id")
+{
+  id: ID!
+  account: Account!
+  amount: Float!
+  type: TransactionType!
+  status: TransactionStatus!
+  description: String
+  merchantName: String
+  category: TransactionCategory
+  timestamp: String!
+  runningBalance: Float
+}
+
+"""Category for transaction classification"""
+enum TransactionCategory
+  @join__type(graph: TRANSACTIONS)
+{
+  GROCERIES @join__enumValue(graph: TRANSACTIONS)
+  DINING @join__enumValue(graph: TRANSACTIONS)
+  UTILITIES @join__enumValue(graph: TRANSACTIONS)
+  ENTERTAINMENT @join__enumValue(graph: TRANSACTIONS)
+  TRANSPORTATION @join__enumValue(graph: TRANSACTIONS)
+  HEALTHCARE @join__enumValue(graph: TRANSACTIONS)
+  SHOPPING @join__enumValue(graph: TRANSACTIONS)
+  INCOME @join__enumValue(graph: TRANSACTIONS)
+  TRANSFER @join__enumValue(graph: TRANSACTIONS)
+  OTHER @join__enumValue(graph: TRANSACTIONS)
+}
+
+"""Current status of the transaction"""
+enum TransactionStatus
+  @join__type(graph: TRANSACTIONS)
+{
+  PENDING @join__enumValue(graph: TRANSACTIONS)
+  COMPLETED @join__enumValue(graph: TRANSACTIONS)
+  FAILED @join__enumValue(graph: TRANSACTIONS)
+  REVERSED @join__enumValue(graph: TRANSACTIONS)
+}
+
+"""Type of transaction"""
+enum TransactionType
+  @join__type(graph: TRANSACTIONS)
+{
+  DEBIT @join__enumValue(graph: TRANSACTIONS)
+  CREDIT @join__enumValue(graph: TRANSACTIONS)
+  TRANSFER_IN @join__enumValue(graph: TRANSACTIONS)
+  TRANSFER_OUT @join__enumValue(graph: TRANSACTIONS)
+  FEE @join__enumValue(graph: TRANSACTIONS)
+  INTEREST @join__enumValue(graph: TRANSACTIONS)
+}
+
+"""A money transfer between accounts"""
+type Transfer
+  @join__type(graph: TRANSFERS, key: "id")
+{
+  id: ID!
+  fromAccount: Account!
+  toAccount: Account
+  toExternalAccount: ExternalAccount
+  amount: Float!
+  status: TransferStatus!
+  scheduledDate: String
+  completedDate: String
+  memo: String
+  createdAt: String!
+}
+
+"""Input for creating a new transfer"""
+input TransferInput
+  @join__type(graph: TRANSFERS)
+{
+  fromAccountId: ID!
+  toAccountId: ID
+  toExternalAccount: ExternalAccountInput
+  amount: Float!
+  scheduledDate: String
+  memo: String
+}
+
+"""Current status of the transfer"""
+enum TransferStatus
+  @join__type(graph: TRANSFERS)
+{
+  SCHEDULED @join__enumValue(graph: TRANSFERS)
+  PENDING @join__enumValue(graph: TRANSFERS)
+  COMPLETED @join__enumValue(graph: TRANSFERS)
+  FAILED @join__enumValue(graph: TRANSFERS)
+  CANCELLED @join__enumValue(graph: TRANSFERS)
+}

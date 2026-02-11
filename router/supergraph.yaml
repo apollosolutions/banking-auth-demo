@@ -1,0 +1,18 @@
+federation_version: =2.10.0
+subgraphs:
+  customers:
+    routing_url: http://localhost:4001/customers/graphql
+    schema:
+      file: ../subgraphs/customers/schema.graphql
+  accounts:
+    routing_url: http://localhost:4001/accounts/graphql
+    schema:
+      file: ../subgraphs/accounts/schema.graphql
+  transactions:
+    routing_url: http://localhost:4001/transactions/graphql
+    schema:
+      file: ../subgraphs/transactions/schema.graphql
+  transfers:
+    routing_url: http://localhost:4001/transfers/graphql
+    schema:
+      file: ../subgraphs/transfers/schema.graphql

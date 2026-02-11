@@ -1,0 +1,101 @@
+# $schema: configuration_schema.json
+
+# JWT Authentication with Auth0
+authentication:
+  router:
+    jwt:
+      jwks:
+        - url: https://dev-luj2t7txgv5y8tp5.us.auth0.com/.well-known/jwks.json
+
+# Authorization directives
+authorization:
+  require_authentication: false  # Allow some queries without auth (e.g., public queries)
+  directives:
+    enabled: true
+
+# Propagate headers to subgraphs
+headers:
+  all:
+    request:
+      - propagate:
+          matching: ".*"
+      # Forward JWT claims to subgraphs so they can identify the current user
+      - insert:
+          name: "x-apollo-jwt-claims"
+          from_context: "apollo::authentication::jwt_claims"
+
+include_subgraph_errors:
+  all: true
+
+# Enable introspection for development
+supergraph:
+  introspection: true
+
+telemetry:
+  instrumentation:
+    instruments:
+      default_requirement_level: recommended
+
+#  exporters:
+#    tracing:
+#      common:
+#        service_name: apollo-router
+#      zipkin:
+#        enabled: true
+#    metrics:
+#      common:
+#        service_name: apollo-router
+#      prometheus:
+#        enabled: true
+
+# Coprocessor for policy evaluation (e.g., HIGH_VALUE_TRANSFER)
+# Requires Apollo Router Enterprise license
+coprocessor:
+  url: "http://localhost:3080"
+  supergraph:
+    request:
+      headers: true
+      body: true
+      context: all
+
+#supergraph:
+#  query_planning:
+#    cache:
+#      in_memory:
+#        limit: 1
+#      redis:
+#        urls:
+#          - "redis://localhost:6379"
+
+#rhai:
+#  main: main.rhai
+#  scripts: rhai/
+
+#apq:
+#  router:
+#    cache:
+#      in_memory:
+#        limit: 1
+#      redis:
+#        urls:
+#          - "redis://localhost:6379"
+
+#preview_entity_cache:
+#  enabled: true
+#  expose_keys_in_context: true
+#  subgraph:
+#    all:
+#      enabled: true
+#      redis:
+#        urls:
+#          - "redis://localhost:6379"
+#        timeout: 5ms
+#        ttl: 2m
+
+#demand_control:
+#  enabled: true
+#  mode: measure
+#  strategy:
+#    static_estimated:
+#      list_size: 10
+#      max: 100
