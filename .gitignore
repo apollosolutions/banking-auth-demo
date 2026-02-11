@@ -1,0 +1,19 @@
+# IDE files
+.idea
+.vscode
+.DS_Store
+
+# Build and binaries
+router/router
+router/configuration_schema.json
+router/customer-*.*
+
+# Secrets
+.env
+router/entitlement.jwt
+
+# Redis
+router/dump.rdb
+
+# Node
+**/node_modules
