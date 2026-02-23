@@ -34,7 +34,7 @@ directive @requiresScopes(scopes: [[requiresScopes__Scope!]!]!) on FIELD_DEFINIT
 """A bank account (checking, savings, etc.)"""
 type Account
   @join__type(graph: ACCOUNTS, key: "id")
-  @join__type(graph: TRANSACTIONS, key: "id", extension: true)
+  @join__type(graph: TRANSACTIONS, key: "id")
   @join__type(graph: TRANSFERS, key: "id", resolvable: false)
 {
   id: ID!
@@ -82,7 +82,7 @@ type Address
 
 """A bank customer with their profile and KYC information"""
 type Customer
-  @join__type(graph: ACCOUNTS, key: "id", extension: true)
+  @join__type(graph: ACCOUNTS, key: "id")
   @join__type(graph: CUSTOMERS, key: "id")
 {
   id: ID!
