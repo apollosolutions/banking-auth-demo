@@ -1,0 +1,55 @@
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@shareable", "@authenticated", "@requiresScopes"])
+
+type Query {
+  """
+  Get the current authenticated customer
+  """
+  me: Customer @authenticated
+
+  """
+  Get a specific customer by ID (requires read:customers scope)
+  """
+  customer(id: ID!): Customer @requiresScopes(scopes: [["read:customers"]])
+
+  """
+  Get all customers (requires read:customers scope)
+  """
+  customers: [Customer!]! @requiresScopes(scopes: [["read:customers"]])
+}
+
+"""
+A bank customer with their profile and KYC information
+"""
+type Customer @key(fields: "id") {
+  id: ID!
+  email: String! @authenticated
+  firstName: String!
+  lastName: String!
+  dateOfBirth: String @requiresScopes(scopes: [["read:pii"]])
+  ssn: String @requiresScopes(scopes: [["read:pii"]])
+  address: Address @requiresScopes(scopes: [["read:pii"]])
+  phoneNumber: String @authenticated
+  kycStatus: KYCStatus!
+  createdAt: String!
+}
+
+"""
+Customer address information
+"""
+type Address {
+  street: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  country: String!
+}
+
+"""
+Know Your Customer verification status
+"""
+enum KYCStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
