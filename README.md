@@ -214,7 +214,7 @@ The response will include an `access_token`:
 Use the token in your GraphQL requests:
 
 ```bash
-curl -X POST http://localhost:4000/graphql \
+curl -X POST http://localhost:4000 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -d '{"query": "{ me { id firstName lastName email } }"}'
@@ -323,6 +323,19 @@ cp .env.sample .env
 ```
 
 The router will start on http://localhost:4000
+
+### Getting a Test Token
+
+After configuring Auth0 (see Auth0 Setup above), create a `.env.auth0` file from the sample and use the provided script:
+
+```bash
+cd router/
+cp .env.auth0.sample .env.auth0
+# Edit .env.auth0 with your Auth0 credentials
+./get-token.sh
+```
+
+Use the returned token in your requests as `Authorization: Bearer <token>`.
 
 ## Example Queries
 
@@ -440,14 +453,18 @@ query GetCustomerPII($id: ID!) {
 
 ### Testing Without Auth
 
-For local development without Auth0, you can use the `x-customer-id` header:
+Queries with `@authenticated` are enforced at the Router level, so unauthenticated requests will be rejected before reaching the subgraphs.
+
+To test without Auth0, you can query **subgraphs directly** (port 4001) using the `x-customer-id` header:
 
 ```bash
-curl -X POST http://localhost:4000/graphql \
+curl -X POST http://localhost:4001/customers/graphql \
   -H "Content-Type: application/json" \
   -H "x-customer-id: customer:1" \
   -d '{"query": "{ me { firstName lastName } }"}'
 ```
+
+To test through the Router, obtain a token first using `./router/get-token.sh` (see Auth0 Setup above).
 
 ## Policy-Based Authorization
 

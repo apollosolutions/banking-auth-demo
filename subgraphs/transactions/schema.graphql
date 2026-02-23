@@ -1,5 +1,5 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@external", "@shareable", "@authenticated", "@requiresScopes"])
+  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@shareable", "@authenticated", "@requiresScopes"])
 
 type Query {
   """
@@ -24,9 +24,8 @@ type Transaction @key(fields: "id") {
   runningBalance: Float
 }
 
-# Extends Account to add transaction history
-extend type Account @key(fields: "id") {
-  id: ID! @external
+type Account @key(fields: "id") {
+  id: ID!
   transactions(limit: Int, offset: Int): [Transaction!]! @authenticated
   recentTransactions: [Transaction!]! @authenticated
 }

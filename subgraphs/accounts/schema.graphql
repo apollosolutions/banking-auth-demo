@@ -1,5 +1,5 @@
 extend schema
-  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@external", "@shareable", "@authenticated", "@requiresScopes"])
+  @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key", "@shareable", "@authenticated", "@requiresScopes"])
 
 type Query {
   """
@@ -28,9 +28,8 @@ type Account @key(fields: "id") {
   interestRate: Float
 }
 
-# Extends Customer to add their accounts
-extend type Customer @key(fields: "id") {
-  id: ID! @external
+type Customer @key(fields: "id") {
+  id: ID!
   accounts: [Account!]! @authenticated
 }
 

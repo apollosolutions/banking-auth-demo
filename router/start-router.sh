@@ -4,10 +4,6 @@ set -e
 source .env
 
 ./router \
-  --config router.yaml --dev 
-  # --supergraph supergraph.graphql \
-  # --dev
-
-#rover dev \
-#  --supergraph-config supergraph.yaml \
-#  --router-config router.yaml
+  --config router.yaml \
+  --supergraph supergraph.graphql \
+  --dev
