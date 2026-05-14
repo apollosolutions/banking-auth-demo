@@ -7,9 +7,13 @@
 router/router
 router/configuration_schema.json
 router/customer-*.*
+**/apollo-mcp-server
+**/mcp-server
 
-# Secrets
+# Secrets — ignore all .env files except samples
 .env
+.env.*
+!.env*.sample
 router/entitlement.jwt
 
 # Redis
@@ -17,3 +21,11 @@ router/dump.rdb
 
 # Node
 **/node_modules
+
+# Backups and editor swap files
+*.bak
+*.backup
+*.orig
+*.swp
+*.swo
+*~
